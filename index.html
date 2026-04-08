@@ -1,927 +1,1359 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="de">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="Cycle Tracker">
-<meta name="theme-color" content="#D4537E">
-<title>Cycle Tracker 🌸</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Cycle Tracker" />
+    <meta name="theme-color" content="#D4537E" />
+    <title>Cycle Tracker 🌸</title>
 
-<!-- Force full width inside Google Apps Script iframe -->
-<script>
-(function() {
-  function fixScale() {
-    var screenW = window.screen.width;
-    var innerW  = window.innerWidth;
-    if (!screenW || !innerW || innerW >= screenW * 0.9) return;
-    // We're in a narrow iframe — scale up to fill the screen
-    var scale = screenW / innerW;
-    var meta  = document.querySelector('meta[name=viewport]');
-    if (!meta) { meta = document.createElement('meta'); meta.name = 'viewport'; document.head.appendChild(meta); }
-    meta.content = 'width=' + innerW + ', initial-scale=' + scale + ', maximum-scale=' + scale;
-  }
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', fixScale);
-  } else {
-    fixScale();
-  }
-  window.addEventListener('resize', fixScale);
-})();
-</script>
+    <script>
+      // ── IMPORTANT: Set your Apps Script Web App URL here ──────────
+      var API_URL =
+        "https://script.google.com/macros/s/AKfycbzZvFEcarfXW40gaJfJtgU_pUg2R7IkID_5U8PtaFV1dCvpndE2ttCPjJxQDvongB0n/exec";
+      // Example: "https://script.google.com/macros/s/ABC123.../exec"
+      // ─────────────────────────────────────────────────────────────
+    </script>
 
-<!-- PWA Manifest inline -->
-<script>
-(function() {
-  var manifest = {
-    name: "Cycle Tracker",
-    short_name: "Cycle",
-    start_url: window.location.href,
-    display: "standalone",
-    background_color: "#faf9f7",
-    theme_color: "#D4537E",
-    icons: [{
-      src: "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192"><rect width="192" height="192" rx="40" fill="#D4537E"/><text y="130" x="96" text-anchor="middle" font-size="120">🌸</text></svg>'),
-      sizes: "192x192", type: "image/svg+xml"
-    }]
-  };
-  var blob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
-  var url  = URL.createObjectURL(blob);
-  var link = document.createElement('link');
-  link.rel = 'manifest'; link.href = url;
-  document.head.appendChild(link);
-})();
-</script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Serif+Display:ital@0;1&display=swap"
+      rel="stylesheet"
+    />
 
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      :root {
+        --pink: #d4537e;
+        --pink-l: #fbeaf0;
+        --pink-d: #72243e;
+        --green: #1d9e75;
+        --green-l: #e1f5ee;
+        --green-d: #0f6e56;
+        --blue: #378add;
+        --blue-l: #e6f1fb;
+        --blue-d: #185fa5;
+        --amber: #ba7517;
+        --amber-l: #faeeda;
+        --amber-d: #633806;
+        --gray: #888780;
+        --gray-l: #f1efe8;
+        --text: #2c2c2a;
+        --text-m: #5f5e5a;
+        --text-s: #888780;
+        --border: rgba(0, 0, 0, 0.09);
+        --border-m: rgba(0, 0, 0, 0.15);
+        --bg: #faf9f7;
+        --card: #ffffff;
+        --radius: 16px;
+        --radius-s: 10px;
+        --nav-h: 68px;
+      }
+      html,
+      body {
+        height: 100%;
+        width: 100%;
+        overflow: hidden;
+      }
+      body {
+        font-family: "DM Sans", sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        display: flex;
+        flex-direction: column;
+        font-size: 16px;
+        -webkit-text-size-adjust: 100%;
+      }
 
-<style>
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      .app-header {
+        background: var(--card);
+        border-bottom: 1px solid var(--border);
+        padding: 1rem 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-shrink: 0;
+        z-index: 10;
+      }
+      .app-header .logo {
+        font-size: 26px;
+      }
+      .app-header h1 {
+        font-family: "DM Serif Display", serif;
+        font-size: 22px;
+        font-weight: 400;
+        flex: 1;
+      }
+      .sync-badge {
+        font-size: 12px;
+        color: var(--text-s);
+        text-align: right;
+        line-height: 1.4;
+        max-width: 140px;
+      }
 
-:root {
-  --pink:       #D4537E;
-  --pink-l:     #FBEAF0;
-  --pink-d:     #72243E;
-  --green:      #1D9E75;
-  --green-l:    #E1F5EE;
-  --green-d:    #0F6E56;
-  --blue:       #378ADD;
-  --blue-l:     #E6F1FB;
-  --blue-d:     #185FA5;
-  --amber:      #BA7517;
-  --amber-l:    #FAEEDA;
-  --amber-d:    #633806;
-  --gray:       #888780;
-  --gray-l:     #F1EFE8;
-  --text:       #2C2C2A;
-  --text-m:     #5F5E5A;
-  --text-s:     #888780;
-  --border:     rgba(0,0,0,0.09);
-  --border-m:   rgba(0,0,0,0.15);
-  --bg:         #faf9f7;
-  --card:       #ffffff;
-  --radius:     16px;
-  --radius-s:   10px;
-  --nav-h:      64px;
-}
+      .scroll-area {
+        flex: 1;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: calc(var(--nav-h) + 1rem);
+      }
 
-html, body {
-  height: 100%;
-  width: 100%;
-  overflow: hidden;
-  min-width: 0;
-}
-body {
-  font-family: 'DM Sans', sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  display: flex;
-  flex-direction: column;
-  font-size: 16px;
-  -webkit-text-size-adjust: 100%;
-}
+      .bottom-nav {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: var(--nav-h);
+        background: var(--card);
+        border-top: 1px solid var(--border);
+        display: flex;
+        z-index: 20;
+        padding-bottom: env(safe-area-inset-bottom);
+      }
+      .nav-btn {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        color: var(--text-s);
+        font-family: "DM Sans", sans-serif;
+        font-size: 13px;
+        min-height: 44px;
+      }
+      .nav-btn .nav-icon {
+        font-size: 24px;
+        line-height: 1;
+      }
+      .nav-btn.active {
+        color: var(--pink);
+      }
 
-/* ── HEADER ── */
-.app-header {
-  background: var(--card);
-  border-bottom: 1px solid var(--border);
-  padding: 1rem 1.25rem;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-shrink: 0;
-  position: relative;
-  z-index: 10;
-}
-.app-header .logo { font-size: 26px; }
-.app-header h1 {
-  font-family: 'DM Serif Display', serif;
-  font-size: 22px;
-  font-weight: 400;
-  flex: 1;
-}
-.sync-badge {
-  font-size: 12px;
-  color: var(--text-s);
-  text-align: right;
-  line-height: 1.4;
-  max-width: 130px;
-}
+      .section {
+        display: none;
+        padding: 1rem;
+        width: 100%;
+      }
+      .section.visible {
+        display: block;
+      }
 
-/* ── SCROLL AREA ── */
-.scroll-area {
-  flex: 1;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  padding-bottom: calc(var(--nav-h) + 1rem);
-}
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 1.25rem;
+        margin-bottom: 1rem;
+      }
+      .card-label {
+        font-size: 11px;
+        font-weight: 500;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+        color: var(--text-s);
+        margin-bottom: 0.9rem;
+      }
 
-/* ── BOTTOM NAV ── */
-.bottom-nav {
-  position: fixed;
-  bottom: 0; left: 0; right: 0;
-  height: var(--nav-h);
-  background: var(--card);
-  border-top: 1px solid var(--border);
-  display: flex;
-  z-index: 20;
-  padding-bottom: env(safe-area-inset-bottom);
-}
-.nav-btn {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  color: var(--text-s);
-  font-family: 'DM Sans', sans-serif;
-  font-size: 13px;
-  transition: color 0.2s;
-  padding: 0;
-  min-height: 44px;
-}
-.nav-btn .nav-icon { font-size: 24px; line-height: 1; }
-.nav-btn.active { color: var(--pink); }
+      .status-hero {
+        text-align: center;
+        padding: 1.25rem 0 0.75rem;
+      }
+      .hero-day {
+        font-family: "DM Serif Display", serif;
+        font-size: 80px;
+        line-height: 1;
+        color: var(--text);
+      }
+      .hero-sub {
+        font-size: 15px;
+        color: var(--text-m);
+        margin-top: 5px;
+      }
+      .phase-pill {
+        display: inline-block;
+        margin-top: 12px;
+        padding: 8px 22px;
+        border-radius: 30px;
+        font-size: 15px;
+        font-weight: 500;
+      }
+      .pill-period {
+        background: var(--pink-l);
+        color: var(--pink-d);
+      }
+      .pill-pms {
+        background: var(--amber-l);
+        color: var(--amber-d);
+      }
+      .pill-fertile {
+        background: var(--green-l);
+        color: var(--green-d);
+      }
+      .pill-ovulation {
+        background: var(--blue-l);
+        color: var(--blue-d);
+      }
+      .pill-luteal {
+        background: var(--gray-l);
+        color: #444441;
+      }
 
-/* ── SECTIONS ── */
-.section { display: none; padding: 1rem; width: 100%; }
-.section.visible { display: block; }
+      .stats-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 8px;
+        margin-bottom: 1rem;
+      }
+      .stat-card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-s);
+        padding: 0.75rem;
+        text-align: center;
+      }
+      .stat-val {
+        font-size: 22px;
+        font-weight: 500;
+        color: var(--text);
+      }
+      .stat-lbl {
+        font-size: 11px;
+        color: var(--text-s);
+        margin-top: 3px;
+      }
 
-/* ── CARDS ── */
-.card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 1.25rem;
-  margin-bottom: 1rem;
-}
-.card-label {
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  color: var(--text-s);
-  margin-bottom: 0.9rem;
-}
+      .forecast-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 13px 0;
+        border-bottom: 1px solid var(--border);
+      }
+      .forecast-row:last-child {
+        border-bottom: none;
+      }
+      .forecast-name {
+        font-size: 16px;
+      }
+      .forecast-date {
+        font-size: 13px;
+        color: var(--text-s);
+        margin-top: 1px;
+      }
+      .f-right {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+      }
+      .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+      .d-period {
+        background: var(--pink);
+      }
+      .d-pms {
+        background: var(--amber);
+      }
+      .d-fertile {
+        background: var(--green);
+      }
+      .d-ovulation {
+        background: var(--blue);
+      }
+      .d-luteal {
+        background: var(--gray);
+      }
+      .days-away {
+        font-size: 14px;
+        color: var(--text-s);
+      }
 
-/* ── STATUS HERO ── */
-.status-hero { text-align: center; padding: 1.25rem 0 0.75rem; }
-.hero-day {
-  font-family: 'DM Serif Display', serif;
-  font-size: 80px;
-  line-height: 1;
-  color: var(--text);
-}
-.hero-sub { font-size: 15px; color: var(--text-m); margin-top: 5px; }
-.phase-pill {
-  display: inline-block;
-  margin-top: 12px;
-  padding: 8px 22px;
-  border-radius: 30px;
-  font-size: 15px;
-  font-weight: 500;
-}
-.pill-period    { background: var(--pink-l);  color: var(--pink-d); }
-.pill-pms       { background: var(--amber-l); color: var(--amber-d); }
-.pill-fertile   { background: var(--green-l); color: var(--green-d); }
-.pill-ovulation { background: var(--blue-l);  color: var(--blue-d); }
-.pill-luteal    { background: var(--gray-l);  color: #444441; }
+      .legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+      .leg-item {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 13px;
+        color: var(--text-m);
+      }
 
-/* ── STATS ROW ── */
-.stats-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 1rem; }
-.stat-card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-s);
-  padding: 0.75rem;
-  text-align: center;
-}
-.stat-val { font-size: 22px; font-weight: 500; color: var(--text); }
-.stat-lbl { font-size: 11px; color: var(--text-s); margin-top: 3px; }
+      .cal-nav {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 10px;
+      }
+      .cal-nav-btn {
+        background: transparent;
+        border: 1px solid var(--border-m);
+        border-radius: 8px;
+        width: 36px;
+        height: 36px;
+        font-size: 18px;
+        cursor: pointer;
+        color: var(--text-m);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .cal-nav-label {
+        font-size: 16px;
+        font-weight: 500;
+      }
+      .cal-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 3px;
+      }
+      .cal-hdr {
+        text-align: center;
+        font-size: 12px;
+        color: var(--text-s);
+        padding: 4px 0;
+        font-weight: 500;
+      }
+      .cal-cell {
+        aspect-ratio: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        border-radius: 50%;
+        color: var(--text);
+      }
+      .cal-cell.today {
+        font-weight: 700;
+        outline: 2px solid var(--text);
+        outline-offset: -2px;
+      }
+      .cal-cell.c-period {
+        background: var(--pink-l);
+        color: var(--pink-d);
+      }
+      .cal-cell.c-pms {
+        background: var(--amber-l);
+        color: var(--amber-d);
+      }
+      .cal-cell.c-fertile {
+        background: var(--green-l);
+        color: var(--green-d);
+      }
+      .cal-cell.c-ovulation {
+        background: var(--blue-l);
+        color: var(--blue-d);
+      }
 
-/* ── FORECAST ── */
-.forecast-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 13px 0;
-  border-bottom: 1px solid var(--border);
-}
-.forecast-row:last-child { border-bottom: none; }
-.forecast-name { font-size: 16px; }
-.forecast-date { font-size: 13px; color: var(--text-s); margin-top: 1px; }
-.f-right { display: flex; align-items: center; gap: 7px; }
-.dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-.d-period    { background: var(--pink); }
-.d-pms       { background: var(--amber); }
-.d-fertile   { background: var(--green); }
-.d-ovulation { background: var(--blue); }
-.d-luteal    { background: var(--gray); }
-.days-away { font-size: 14px; color: var(--text-s); }
+      .kw-search {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 1rem;
+        align-items: center;
+      }
+      .kw-search input {
+        flex: 1;
+        padding: 11px 14px;
+        border: 1px solid var(--border-m);
+        border-radius: var(--radius-s);
+        font-size: 16px;
+        font-family: "DM Sans", sans-serif;
+        background: var(--card);
+        color: var(--text);
+      }
+      .kw-search input:focus {
+        outline: none;
+        border-color: var(--pink);
+      }
 
-/* ── LEGEND ── */
-.legend { display: flex; flex-wrap: wrap; gap: 10px; }
-.leg-item { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text-m); }
+      .cycle-entry {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 1rem 1.25rem;
+        margin-bottom: 0.75rem;
+        cursor: pointer;
+      }
+      .cycle-entry.has-end {
+        border-left: 3px solid var(--green);
+      }
+      .cycle-entry.no-end {
+        border-left: 3px solid var(--amber);
+      }
+      .entry-kw {
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--text-s);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+      .entry-week {
+        font-size: 13px;
+        color: var(--text-m);
+        margin-top: 1px;
+      }
+      .entry-dates {
+        margin-top: 10px;
+        display: flex;
+        gap: 16px;
+      }
+      .entry-date-label {
+        font-size: 11px;
+        color: var(--text-s);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      .entry-date-val {
+        font-size: 17px;
+        font-weight: 500;
+        color: var(--text);
+      }
+      .entry-duration {
+        font-size: 13px;
+        color: var(--text-m);
+        margin-top: 6px;
+      }
+      .entry-notes {
+        font-size: 13px;
+        color: var(--text-m);
+        margin-top: 4px;
+        font-style: italic;
+      }
+      .entry-updated {
+        font-size: 12px;
+        color: var(--text-s);
+        margin-top: 6px;
+      }
+      .no-end-badge {
+        display: inline-block;
+        margin-top: 6px;
+        padding: 2px 10px;
+        border-radius: 20px;
+        font-size: 12px;
+        background: var(--amber-l);
+        color: var(--amber-d);
+      }
 
-/* ── CALENDAR ── */
-.cal-nav {
-  display: flex; align-items: center;
-  justify-content: space-between;
-  margin-bottom: 10px;
-}
-.cal-nav-btn {
-  background: transparent;
-  border: 1px solid var(--border-m);
-  border-radius: 8px;
-  width: 32px; height: 32px;
-  font-size: 16px; cursor: pointer;
-  color: var(--text-m);
-  display: flex; align-items: center; justify-content: center;
-}
-.cal-nav-label { font-size: 15px; font-weight: 500; }
-.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
-.cal-hdr { text-align: center; font-size: 12px; color: var(--text-s); padding: 4px 0; font-weight: 500; }
-.cal-cell {
-  aspect-ratio: 1;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 14px; border-radius: 50%; color: var(--text);
-  cursor: default;
-}
-.cal-cell.today { font-weight: 700; outline: 2px solid var(--text); outline-offset: -2px; }
-.cal-cell.c-period    { background: var(--pink-l);  color: var(--pink-d); }
-.cal-cell.c-pms       { background: var(--amber-l); color: var(--amber-d); }
-.cal-cell.c-fertile   { background: var(--green-l); color: var(--green-d); }
-.cal-cell.c-ovulation { background: var(--blue-l);  color: var(--blue-d); }
+      .modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.4);
+        z-index: 50;
+        align-items: flex-end;
+        justify-content: center;
+      }
+      .modal-overlay.open {
+        display: flex;
+      }
+      .modal {
+        background: var(--card);
+        border-radius: var(--radius) var(--radius) 0 0;
+        padding: 1.5rem 1.25rem 2rem;
+        width: 100%;
+        max-width: 520px;
+        max-height: 90vh;
+        overflow-y: auto;
+      }
+      .modal-title {
+        font-family: "DM Serif Display", serif;
+        font-size: 20px;
+        margin-bottom: 1.25rem;
+      }
+      .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin-bottom: 1rem;
+      }
+      .form-group label {
+        font-size: 14px;
+        color: var(--text-m);
+        font-weight: 500;
+      }
+      .form-group input,
+      .form-group textarea {
+        padding: 13px 16px;
+        border: 1px solid var(--border-m);
+        border-radius: var(--radius-s);
+        font-size: 16px;
+        font-family: "DM Sans", sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        width: 100%;
+      }
+      .form-group textarea {
+        resize: vertical;
+        min-height: 80px;
+      }
+      .form-group input:focus,
+      .form-group textarea:focus {
+        outline: none;
+        border-color: var(--pink);
+      }
 
-/* ── KW LIST (Einträge) ── */
-.kw-search {
-  display: flex; gap: 8px; margin-bottom: 1rem; align-items: center;
-}
-.kw-search input {
-  flex: 1; padding: 9px 14px;
-  border: 1px solid var(--border-m);
-  border-radius: var(--radius-s);
-  font-size: 14px; font-family: 'DM Sans', sans-serif;
-  background: var(--card); color: var(--text);
-}
-.kw-search input:focus { outline: none; border-color: var(--pink); }
+      .who-row {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 1rem;
+      }
+      .who-btn {
+        flex: 1;
+        padding: 11px;
+        border: 1px solid var(--border-m);
+        border-radius: var(--radius-s);
+        font-size: 15px;
+        font-family: "DM Sans", sans-serif;
+        cursor: pointer;
+        background: transparent;
+        color: var(--text-m);
+      }
+      .who-btn.sel {
+        border-color: var(--pink);
+        background: var(--pink-l);
+        color: var(--pink-d);
+        font-weight: 500;
+      }
 
-.cycle-entry {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 1rem 1.25rem;
-  margin-bottom: 0.75rem;
-  cursor: pointer;
-  transition: border-color 0.15s;
-}
-.cycle-entry:hover { border-color: var(--pink); }
-.cycle-entry.has-end { border-left: 3px solid var(--green); }
-.cycle-entry.no-end  { border-left: 3px solid var(--amber); }
+      .btn-primary {
+        width: 100%;
+        padding: 14px;
+        border: none;
+        border-radius: var(--radius-s);
+        font-size: 16px;
+        font-family: "DM Sans", sans-serif;
+        font-weight: 500;
+        background: var(--pink);
+        color: white;
+        cursor: pointer;
+      }
+      .btn-primary:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      .btn-sec {
+        width: 100%;
+        padding: 12px;
+        margin-top: 8px;
+        border: 1px solid var(--border-m);
+        border-radius: var(--radius-s);
+        font-size: 15px;
+        font-family: "DM Sans", sans-serif;
+        background: transparent;
+        color: var(--text-m);
+        cursor: pointer;
+      }
+      .btn-danger {
+        width: 100%;
+        padding: 12px;
+        margin-top: 8px;
+        border: 1px solid #f7c1c1;
+        border-radius: var(--radius-s);
+        font-size: 15px;
+        font-family: "DM Sans", sans-serif;
+        background: #fcebeb;
+        color: #a32d2d;
+        cursor: pointer;
+      }
 
-.entry-kw { font-size: 13px; font-weight: 500; color: var(--text-s); text-transform: uppercase; letter-spacing: 0.06em; }
-.entry-week { font-size: 13px; color: var(--text-m); margin-top: 1px; }
-.entry-dates { margin-top: 10px; display: flex; gap: 16px; }
-.entry-date-block { }
-.entry-date-label { font-size: 11px; color: var(--text-s); text-transform: uppercase; letter-spacing: 0.05em; }
-.entry-date-val { font-size: 17px; font-weight: 500; color: var(--text); }
-.entry-duration { font-size: 13px; color: var(--text-m); margin-top: 6px; }
-.entry-notes { font-size: 13px; color: var(--text-m); margin-top: 4px; font-style: italic; }
-.entry-updated { font-size: 12px; color: var(--text-s); margin-top: 6px; }
-.no-end-badge {
-  display: inline-block; margin-top: 6px;
-  padding: 2px 10px; border-radius: 20px;
-  font-size: 11px; background: var(--amber-l); color: var(--amber-d);
-}
+      .fab {
+        position: fixed;
+        bottom: calc(var(--nav-h) + 16px);
+        right: 1.25rem;
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background: var(--pink);
+        color: white;
+        font-size: 28px;
+        border: none;
+        cursor: pointer;
+        box-shadow: 0 4px 16px rgba(212, 83, 126, 0.35);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 15;
+      }
 
-/* ── FORM / MODAL ── */
-.modal-overlay {
-  display: none;
-  position: fixed; inset: 0;
-  background: rgba(0,0,0,0.4);
-  z-index: 50;
-  align-items: flex-end;
-  justify-content: center;
-}
-.modal-overlay.open { display: flex; }
-.modal {
-  background: var(--card);
-  border-radius: var(--radius) var(--radius) 0 0;
-  padding: 1.5rem 1.25rem 2rem;
-  width: 100%; max-width: 520px;
-  max-height: 90vh;
-  overflow-y: auto;
-}
-.modal-title {
-  font-family: 'DM Serif Display', serif;
-  font-size: 20px; margin-bottom: 1.25rem;
-}
-.form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 1rem; }
-.form-group label { font-size: 14px; color: var(--text-m); font-weight: 500; }
-.form-group input, .form-group textarea {
-  padding: 13px 16px;
-  border: 1px solid var(--border-m);
-  border-radius: var(--radius-s);
-  font-size: 16px; font-family: 'DM Sans', sans-serif;
-  background: var(--bg); color: var(--text); width: 100%;
-}
-.form-group textarea { resize: vertical; min-height: 80px; font-size: 16px; }
-.form-group input:focus, .form-group textarea:focus { outline: none; border-color: var(--pink); }
+      .toast {
+        position: fixed;
+        bottom: calc(var(--nav-h)+12px);
+        left: 50%;
+        transform: translateX(-50%) translateY(60px);
+        background: #2c2c2a;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 30px;
+        font-size: 14px;
+        transition: transform 0.25s ease;
+        z-index: 100;
+        white-space: nowrap;
+        pointer-events: none;
+      }
+      .toast.show {
+        transform: translateX(-50%) translateY(0);
+      }
 
-.who-row { display: flex; gap: 8px; margin-bottom: 1rem; }
-.who-btn {
-  flex: 1; padding: 9px;
-  border: 1px solid var(--border-m);
-  border-radius: var(--radius-s);
-  font-size: 14px; font-family: 'DM Sans', sans-serif;
-  cursor: pointer; background: transparent; color: var(--text-m);
-  transition: all 0.15s;
-}
-.who-btn.sel { border-color: var(--pink); background: var(--pink-l); color: var(--pink-d); font-weight: 500; }
+      .spinner {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border: 2px solid rgba(255, 255, 255, 0.4);
+        border-top-color: white;
+        border-radius: 50%;
+        animation: spin 0.7s linear infinite;
+        vertical-align: middle;
+        margin-right: 5px;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
 
-.btn-primary {
-  width: 100%; padding: 13px; border: none;
-  border-radius: var(--radius-s);
-  font-size: 15px; font-family: 'DM Sans', sans-serif; font-weight: 500;
-  background: var(--pink); color: white; cursor: pointer;
-  transition: opacity 0.15s;
-}
-.btn-primary:hover { opacity: 0.88; }
-.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
-.btn-sec {
-  width: 100%; padding: 11px; margin-top: 8px;
-  border: 1px solid var(--border-m);
-  border-radius: var(--radius-s);
-  font-size: 14px; font-family: 'DM Sans', sans-serif;
-  background: transparent; color: var(--text-m); cursor: pointer;
-}
-.btn-danger {
-  width: 100%; padding: 11px; margin-top: 8px;
-  border: 1px solid #F7C1C1;
-  border-radius: var(--radius-s);
-  font-size: 14px; font-family: 'DM Sans', sans-serif;
-  background: #FCEBEB; color: #A32D2D; cursor: pointer;
-}
+      .empty-hint {
+        text-align: center;
+        padding: 2.5rem 1rem;
+        color: var(--text-m);
+        font-size: 15px;
+        line-height: 1.7;
+      }
+      .empty-hint .big {
+        font-size: 40px;
+        display: block;
+        margin-bottom: 10px;
+      }
 
-/* ── FAB ── */
-.fab {
-  position: fixed;
-  bottom: calc(var(--nav-h) + 16px);
-  right: 1.25rem;
-  width: 52px; height: 52px;
-  border-radius: 50%;
-  background: var(--pink);
-  color: white;
-  font-size: 26px; line-height: 1;
-  border: none; cursor: pointer;
-  box-shadow: 0 4px 16px rgba(212,83,126,0.35);
-  display: flex; align-items: center; justify-content: center;
-  z-index: 15;
-  transition: transform 0.15s;
-}
-.fab:active { transform: scale(0.94); }
-
-/* ── TOAST ── */
-.toast {
-  position: fixed; bottom: calc(var(--nav-h) + 12px); left: 50%;
-  transform: translateX(-50%) translateY(60px);
-  background: #2C2C2A; color: white;
-  padding: 9px 18px; border-radius: 30px;
-  font-size: 13px; transition: transform 0.25s ease;
-  z-index: 100; white-space: nowrap; pointer-events: none;
-}
-.toast.show { transform: translateX(-50%) translateY(0); }
-
-/* ── SPINNER ── */
-.spinner {
-  display: inline-block; width: 16px; height: 16px;
-  border: 2px solid rgba(255,255,255,0.4);
-  border-top-color: white; border-radius: 50%;
-  animation: spin 0.7s linear infinite;
-  vertical-align: middle; margin-right: 5px;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-
-.empty-hint {
-  text-align: center; padding: 2.5rem 1rem;
-  color: var(--text-m); font-size: 14px; line-height: 1.7;
-}
-.empty-hint .big { font-size: 40px; display: block; margin-bottom: 10px; }
-</style>
-</head>
-<body>
-
-<div class="app-header">
-  <span class="logo">🌸</span>
-  <h1>Cycle Tracker</h1>
-  <div class="sync-badge" id="sync-badge">Laden…</div>
-</div>
-
-<div class="scroll-area" id="scroll-area">
-
-  <!-- STATUS -->
-  <div id="sec-status" class="section visible">
-    <div class="card" id="hero-card">
-      <div class="empty-hint"><span class="big">🌸</span>Noch keine Einträge.<br>Tippe auf + um zu starten.</div>
+      .setup-warning {
+        background: #faeeda;
+        border: 1px solid #ba7517;
+        border-radius: var(--radius);
+        padding: 1rem 1.25rem;
+        margin-bottom: 1rem;
+        font-size: 14px;
+        color: #633806;
+        line-height: 1.6;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app-header">
+      <span class="logo">🌸</span>
+      <h1>Cycle Tracker</h1>
+      <div class="sync-badge" id="sync-badge">Laden…</div>
     </div>
-    <div class="stats-row" id="stats-row" style="display:none;">
-      <div class="stat-card"><div class="stat-val" id="stat-avg">—</div><div class="stat-lbl">Ø Zyklus</div></div>
-      <div class="stat-card"><div class="stat-val" id="stat-dur">—</div><div class="stat-lbl">Ø Dauer</div></div>
-      <div class="stat-card"><div class="stat-val" id="stat-cnt">—</div><div class="stat-lbl">Einträge</div></div>
-    </div>
-    <div class="card" id="forecast-card" style="display:none;">
-      <div class="card-label">Vorschau</div>
-      <div id="forecast-list"></div>
-    </div>
-    <div class="card">
-      <div class="card-label">Legende</div>
-      <div class="legend">
-        <div class="leg-item"><div class="dot d-period"></div>Periode</div>
-        <div class="leg-item"><div class="dot d-pms"></div>PMS</div>
-        <div class="leg-item"><div class="dot d-fertile"></div>Fruchtbar</div>
-        <div class="leg-item"><div class="dot d-ovulation"></div>Eisprung</div>
-        <div class="leg-item"><div class="dot d-luteal"></div>Lutealphase</div>
+
+    <div class="scroll-area">
+      <!-- STATUS -->
+      <div id="sec-status" class="section visible">
+        <div class="card" id="hero-card">
+          <div class="empty-hint">
+            <span class="big">🌸</span>Noch keine Einträge.<br />Tippe auf + um
+            zu starten.
+          </div>
+        </div>
+        <div class="stats-row" id="stats-row" style="display: none">
+          <div class="stat-card">
+            <div class="stat-val" id="stat-avg">—</div>
+            <div class="stat-lbl">Ø Zyklus</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-val" id="stat-dur">—</div>
+            <div class="stat-lbl">Ø Dauer</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-val" id="stat-cnt">—</div>
+            <div class="stat-lbl">Einträge</div>
+          </div>
+        </div>
+        <div class="card" id="forecast-card" style="display: none">
+          <div class="card-label">Vorschau</div>
+          <div id="forecast-list"></div>
+        </div>
+        <div class="card">
+          <div class="card-label">Legende</div>
+          <div class="legend">
+            <div class="leg-item">
+              <div class="dot d-period"></div>
+              Periode
+            </div>
+            <div class="leg-item">
+              <div class="dot d-pms"></div>
+              PMS
+            </div>
+            <div class="leg-item">
+              <div class="dot d-fertile"></div>
+              Fruchtbar
+            </div>
+            <div class="leg-item">
+              <div class="dot d-ovulation"></div>
+              Eisprung
+            </div>
+            <div class="leg-item">
+              <div class="dot d-luteal"></div>
+              Lutealphase
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- KALENDER -->
+      <div id="sec-calendar" class="section">
+        <div class="card">
+          <div class="cal-nav">
+            <button class="cal-nav-btn" onclick="prevMonth()">‹</button>
+            <span class="cal-nav-label" id="cal-label"></span>
+            <button class="cal-nav-btn" onclick="nextMonth()">›</button>
+          </div>
+          <div class="cal-grid" id="cal-grid"></div>
+          <div class="legend" style="margin-top: 14px">
+            <div class="leg-item">
+              <div class="dot d-period"></div>
+              Periode
+            </div>
+            <div class="leg-item">
+              <div class="dot d-pms"></div>
+              PMS
+            </div>
+            <div class="leg-item">
+              <div class="dot d-fertile"></div>
+              Fruchtbar
+            </div>
+            <div class="leg-item">
+              <div class="dot d-ovulation"></div>
+              Eisprung
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- EINTRÄGE -->
+      <div id="sec-entries" class="section">
+        <div class="kw-search">
+          <input
+            type="text"
+            id="kw-inp"
+            placeholder="KW oder Datum suchen…"
+            oninput="renderEntries()"
+          />
+        </div>
+        <div id="entries-list"></div>
       </div>
     </div>
-  </div>
 
-  <!-- KALENDER -->
-  <div id="sec-calendar" class="section">
-    <div class="card">
-      <div class="cal-nav">
-        <button class="cal-nav-btn" onclick="prevMonth()">‹</button>
-        <span class="cal-nav-label" id="cal-label"></span>
-        <button class="cal-nav-btn" onclick="nextMonth()">›</button>
+    <nav class="bottom-nav">
+      <button class="nav-btn active" onclick="showSection('status', this)">
+        <span class="nav-icon">🌸</span>Status
+      </button>
+      <button class="nav-btn" onclick="showSection('calendar', this)">
+        <span class="nav-icon">📅</span>Kalender
+      </button>
+      <button class="nav-btn" onclick="showSection('entries', this)">
+        <span class="nav-icon">📋</span>Einträge
+      </button>
+    </nav>
+
+    <button class="fab" onclick="openModal(null)">+</button>
+
+    <!-- MODAL -->
+    <div
+      class="modal-overlay"
+      id="modal-overlay"
+      onclick="closeModalOnBg(event)"
+    >
+      <div class="modal">
+        <div class="modal-title" id="modal-title">Neuer Zyklus</div>
+        <input type="hidden" id="edit-id" />
+        <div class="card-label">Wer trägt ein?</div>
+        <div class="who-row">
+          <button class="who-btn sel" onclick="selWho(this, 'Sie')">
+            Sie 👩
+          </button>
+          <button class="who-btn" onclick="selWho(this, 'Er')">Er 👨</button>
+        </div>
+        <div class="form-group">
+          <label>Periodenbeginn</label>
+          <input type="date" id="inp-start" />
+        </div>
+        <div class="form-group">
+          <label
+            >Periodenende
+            <span style="color: var(--text-s); font-weight: 400"
+              >(optional)</span
+            ></label
+          >
+          <input type="date" id="inp-end" />
+        </div>
+        <div class="form-group">
+          <label>Notizen (optional)</label>
+          <textarea
+            id="inp-notes"
+            placeholder="z.B. Schmerzen, Stimmung…"
+          ></textarea>
+        </div>
+        <button class="btn-primary" id="modal-save-btn" onclick="saveCycle()">
+          Speichern
+        </button>
+        <button class="btn-sec" onclick="closeModal()">Abbrechen</button>
+        <button
+          class="btn-danger"
+          id="modal-delete-btn"
+          onclick="deleteCycleEntry()"
+          style="display: none"
+        >
+          Eintrag löschen
+        </button>
       </div>
-      <div class="cal-grid" id="cal-grid"></div>
-      <div class="legend" style="margin-top:12px;">
-        <div class="leg-item"><div class="dot d-period"></div>Periode</div>
-        <div class="leg-item"><div class="dot d-pms"></div>PMS</div>
-        <div class="leg-item"><div class="dot d-fertile"></div>Fruchtbar</div>
-        <div class="leg-item"><div class="dot d-ovulation"></div>Eisprung</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- EINTRÄGE -->
-  <div id="sec-entries" class="section">
-    <div class="kw-search">
-      <input type="text" id="kw-search-inp" placeholder="KW oder Datum suchen…" oninput="renderEntries()">
-    </div>
-    <div id="entries-list"></div>
-  </div>
-
-</div>
-
-<!-- BOTTOM NAV -->
-<nav class="bottom-nav">
-  <button class="nav-btn active" onclick="showSection('status',this)">
-    <span class="nav-icon">🌸</span>Status
-  </button>
-  <button class="nav-btn" onclick="showSection('calendar',this)">
-    <span class="nav-icon">📅</span>Kalender
-  </button>
-  <button class="nav-btn" onclick="showSection('entries',this)">
-    <span class="nav-icon">📋</span>Einträge
-  </button>
-</nav>
-
-<!-- FAB -->
-<button class="fab" onclick="openModal(null)" title="Neuer Eintrag">+</button>
-
-<!-- MODAL -->
-<div class="modal-overlay" id="modal-overlay" onclick="closeModalOnBg(event)">
-  <div class="modal">
-    <div class="modal-title" id="modal-title">Neuer Zyklus</div>
-    <input type="hidden" id="edit-id">
-
-    <div class="card-label">Wer trägt ein?</div>
-    <div class="who-row">
-      <button class="who-btn sel" onclick="selWho(this,'Sie')">Sie 👩</button>
-      <button class="who-btn" onclick="selWho(this,'Er')">Er 👨</button>
     </div>
 
-    <div class="form-group">
-      <label>Periodenbeginn</label>
-      <input type="date" id="inp-start">
-    </div>
-    <div class="form-group">
-      <label>Periodenende <span style="color:var(--text-s);font-weight:400;">(optional, nachträglich)</span></label>
-      <input type="date" id="inp-end">
-    </div>
-    <div class="form-group">
-      <label>Notizen (optional)</label>
-      <textarea id="inp-notes" placeholder="z.B. Schmerzen, Stimmung…"></textarea>
-    </div>
+    <div class="toast" id="toast"></div>
 
-    <button class="btn-primary" id="modal-save-btn" onclick="saveCycle()">Speichern</button>
-    <button class="btn-sec" onclick="closeModal()">Abbrechen</button>
-    <button class="btn-danger" id="modal-delete-btn" onclick="deleteCycleEntry()" style="display:none;">Eintrag löschen</button>
-  </div>
-</div>
+    <script>
+      var cycles = [];
+      var selectedWho = "Sie";
+      var calYear, calMonth;
+      var PMS_DAYS = 4;
+      var FERTILE_DAYS = 5;
 
-<!-- TOAST -->
-<div class="toast" id="toast"></div>
+      // ── API ───────────────────────────────────────────────────────
+      function apiCall(params) {
+        if (!API_URL || API_URL.indexOf("PASTE") !== -1) {
+          showToast("Bitte API_URL in index.html setzen!");
+          return Promise.reject("No API URL");
+        }
+        var url =
+          API_URL +
+          "?" +
+          Object.keys(params)
+            .map(function (k) {
+              return (
+                encodeURIComponent(k) + "=" + encodeURIComponent(params[k])
+              );
+            })
+            .join("&");
+        return fetch(url)
+          .then(function (r) {
+            return r.json();
+          })
+          .catch(function (e) {
+            showToast("Verbindungsfehler");
+            throw e;
+          });
+      }
 
-<script>
-// ── State ────────────────────────────────────────────────────
-var cycles     = [];
-var selectedWho = 'Sie';
-var calYear, calMonth;
-var PMS_DAYS    = 4;   // days before period shown as PMS
-var FERTILE_DAYS = 5;  // days before ovulation shown as fertile
+      function loadData() {
+        document.getElementById("sync-badge").textContent = "Synchronisiere…";
+        apiCall({ action: "getData" })
+          .then(function (res) {
+            if (res.success) {
+              cycles = res.data || [];
+              updateAll();
+              var badge =
+                cycles.length && cycles[0].updatedAt
+                  ? "Zuletzt: " + cycles[0].updatedAt
+                  : cycles.length
+                    ? "Geladen"
+                    : "Keine Daten";
+              document.getElementById("sync-badge").textContent = badge;
+            } else {
+              document.getElementById("sync-badge").textContent = "Fehler";
+              showToast("Fehler: " + (res.error || "Unbekannt"));
+            }
+          })
+          .catch(function () {
+            document.getElementById("sync-badge").textContent = "Offline?";
+          });
+      }
 
-// ── Init ─────────────────────────────────────────────────────
-var now = new Date();
-calYear  = now.getFullYear();
-calMonth = now.getMonth();
-loadData();
+      // ── Stats ─────────────────────────────────────────────────────
+      function calcStats() {
+        if (!cycles.length) return null;
+        var sorted = cycles.slice().sort(function (a, b) {
+          return new Date(a.start) - new Date(b.start);
+        });
+        var cl = [];
+        for (var i = 1; i < sorted.length; i++) {
+          var d = Math.round(
+            (new Date(sorted[i].start) - new Date(sorted[i - 1].start)) /
+              86400000,
+          );
+          if (d > 15 && d < 60) cl.push(d);
+        }
+        var avgCycle = cl.length
+          ? Math.round(
+              cl.reduce(function (a, b) {
+                return a + b;
+              }, 0) / cl.length,
+            )
+          : 28;
+        var dl = [];
+        sorted.forEach(function (c) {
+          if (c.start && c.end) {
+            var d = Math.round(
+              (new Date(c.end) - new Date(c.start)) / 86400000,
+            );
+            if (d > 0 && d < 15) dl.push(d);
+          }
+        });
+        var avgDuration = dl.length
+          ? Math.round(
+              dl.reduce(function (a, b) {
+                return a + b;
+              }, 0) / dl.length,
+            )
+          : 5;
+        return {
+          avgCycle: avgCycle,
+          avgDuration: avgDuration,
+          count: cycles.length,
+          latest: sorted[sorted.length - 1],
+        };
+      }
 
-function loadData() {
-  document.getElementById('sync-badge').textContent = 'Synchronisiere…';
-  google.script.run
-    .withSuccessHandler(function(data) {
-      cycles = data || [];
-      updateAll();
-      document.getElementById('sync-badge').textContent =
-        cycles.length ? 'Zuletzt: ' + (cycles[0].updatedAt || '') : 'Keine Daten';
-    })
-    .withFailureHandler(function(e) {
-      document.getElementById('sync-badge').textContent = 'Fehler';
-      showToast('Laden fehlgeschlagen');
-    })
-    .getAllCycles();
-}
+      function getPhaseForDate(date, stats) {
+        if (!stats || !stats.latest || !stats.latest.start) return null;
+        var start = new Date(stats.latest.start);
+        start.setHours(0, 0, 0, 0);
+        date = new Date(date);
+        date.setHours(0, 0, 0, 0);
+        var diff = Math.round((date - start) / 86400000);
+        if (diff < 0) {
+          var cb = Math.ceil(Math.abs(diff) / stats.avgCycle);
+          start.setDate(start.getDate() - cb * stats.avgCycle);
+          diff = Math.round((date - start) / 86400000);
+        }
+        var doc = (diff % stats.avgCycle) + 1;
+        if (doc <= 0) doc += stats.avgCycle;
+        var ov = stats.avgCycle - 14,
+          ff = ov - FERTILE_DAYS,
+          pf = stats.avgCycle - PMS_DAYS;
+        if (doc <= stats.avgDuration) return "period";
+        if (doc >= pf) return "pms";
+        if (doc === ov) return "ovulation";
+        if (doc >= ff) return "fertile";
+        return "luteal";
+      }
 
-// ── Derived stats ────────────────────────────────────────────
-function calcStats() {
-  if (!cycles.length) return null;
-  var sorted = cycles.slice().sort(function(a,b){ return new Date(a.start) - new Date(b.start); });
+      var phaseLabels = {
+        period: "Periode",
+        pms: "PMS",
+        fertile: "Fruchtbare Phase",
+        ovulation: "Eisprung",
+        luteal: "Lutealphase",
+      };
 
-  // Average cycle length from consecutive starts
-  var cycleLengths = [];
-  for (var i = 1; i < sorted.length; i++) {
-    var diff = Math.round((new Date(sorted[i].start) - new Date(sorted[i-1].start)) / 86400000);
-    if (diff > 15 && diff < 60) cycleLengths.push(diff);
-  }
-  var avgCycle = cycleLengths.length
-    ? Math.round(cycleLengths.reduce(function(a,b){return a+b;},0) / cycleLengths.length)
-    : 28;
+      function updateAll() {
+        var s = calcStats();
+        updateStatus(s);
+        updateCalendar(s);
+        renderEntries();
+        if (s) {
+          document.getElementById("stats-row").style.display = "grid";
+          document.getElementById("stat-avg").textContent = s.avgCycle + "d";
+          document.getElementById("stat-dur").textContent = s.avgDuration + "d";
+          document.getElementById("stat-cnt").textContent = s.count;
+        }
+      }
 
-  // Average period duration from entries that have end
-  var durations = [];
-  sorted.forEach(function(c) {
-    if (c.start && c.end) {
-      var d = Math.round((new Date(c.end) - new Date(c.start)) / 86400000);
-      if (d > 0 && d < 15) durations.push(d);
-    }
-  });
-  var avgDuration = durations.length
-    ? Math.round(durations.reduce(function(a,b){return a+b;},0) / durations.length)
-    : 5;
+      function updateStatus(stats) {
+        var card = document.getElementById("hero-card");
+        if (!stats || !stats.latest || !stats.latest.start) {
+          card.innerHTML =
+            '<div class="empty-hint"><span class="big">🌸</span>Noch keine Einträge.<br>Tippe auf + um zu starten.</div>';
+          document.getElementById("forecast-card").style.display = "none";
+          return;
+        }
+        var today = new Date();
+        today.setHours(0, 0, 0, 0);
+        var start = new Date(stats.latest.start);
+        start.setHours(0, 0, 0, 0);
+        var diff = Math.round((today - start) / 86400000);
+        var doc = (diff % stats.avgCycle) + 1;
+        var phase = getPhaseForDate(today, stats);
+        card.innerHTML =
+          '<div class="status-hero"><div class="hero-day">' +
+          doc +
+          '</div><div class="hero-sub">Tag ' +
+          doc +
+          " von " +
+          stats.avgCycle +
+          '</div><div class="phase-pill pill-' +
+          phase +
+          '">' +
+          phaseLabels[phase] +
+          "</div></div>";
 
-  return { avgCycle: avgCycle, avgDuration: avgDuration, count: cycles.length, latest: sorted[sorted.length-1] };
-}
+        var fc = document.getElementById("forecast-card");
+        fc.style.display = "block";
+        var ov = stats.avgCycle - 14,
+          ff = ov - FERTILE_DAYS,
+          pf = stats.avgCycle - PMS_DAYS;
+        function du(t) {
+          var d = t - doc;
+          if (d <= 0) d += stats.avgCycle;
+          return d;
+        }
+        var items = [
+          { label: "PMS beginnt", days: du(pf), cls: "d-pms" },
+          { label: "Fruchtbare Phase", days: du(ff), cls: "d-fertile" },
+          { label: "Eisprung", days: du(ov), cls: "d-ovulation" },
+          {
+            label: "Nächste Periode",
+            days: du(stats.avgCycle),
+            cls: "d-period",
+          },
+        ];
+        items.sort(function (a, b) {
+          return a.days - b.days;
+        });
+        document.getElementById("forecast-list").innerHTML = items
+          .map(function (i) {
+            var d = new Date(today);
+            d.setDate(d.getDate() + i.days);
+            var w =
+              i.days === 0
+                ? "heute"
+                : i.days === 1
+                  ? "morgen"
+                  : "in " + i.days + " Tagen";
+            return (
+              '<div class="forecast-row"><div><div class="forecast-name">' +
+              i.label +
+              '</div><div class="forecast-date">' +
+              fmtDate(d) +
+              '</div></div><div class="f-right"><div class="dot ' +
+              i.cls +
+              '"></div><span class="days-away">' +
+              w +
+              "</span></div></div>"
+            );
+          })
+          .join("");
+      }
 
-// ── Phase for a given date ────────────────────────────────────
-function getPhaseForDate(date, stats) {
-  if (!stats) return null;
-  var latest = stats.latest;
-  if (!latest || !latest.start) return null;
+      function updateCalendar(stats) {
+        var months = [
+          "Januar",
+          "Februar",
+          "März",
+          "April",
+          "Mai",
+          "Juni",
+          "Juli",
+          "August",
+          "September",
+          "Oktober",
+          "November",
+          "Dezember",
+        ];
+        document.getElementById("cal-label").textContent =
+          months[calMonth] + " " + calYear;
+        var grid = document.getElementById("cal-grid");
+        var html = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"]
+          .map(function (d) {
+            return '<div class="cal-hdr">' + d + "</div>";
+          })
+          .join("");
+        var first = new Date(calYear, calMonth, 1);
+        var dow = first.getDay();
+        if (dow === 0) dow = 7;
+        for (var i = 1; i < dow; i++) html += "<div></div>";
+        var today = new Date();
+        today.setHours(0, 0, 0, 0);
+        var dim = new Date(calYear, calMonth + 1, 0).getDate();
+        for (var d = 1; d <= dim; d++) {
+          var date = new Date(calYear, calMonth, d);
+          var cls = "cal-cell";
+          if (date.getTime() === today.getTime()) cls += " today";
+          if (stats) {
+            var phase = getPhaseForDate(date, stats);
+            if (phase === "period") cls += " c-period";
+            else if (phase === "pms") cls += " c-pms";
+            else if (phase === "fertile") cls += " c-fertile";
+            else if (phase === "ovulation") cls += " c-ovulation";
+          }
+          html += '<div class="' + cls + '">' + d + "</div>";
+        }
+        grid.innerHTML = html;
+      }
+      function prevMonth() {
+        calMonth--;
+        if (calMonth < 0) {
+          calMonth = 11;
+          calYear--;
+        }
+        updateCalendar(calcStats());
+      }
+      function nextMonth() {
+        calMonth++;
+        if (calMonth > 11) {
+          calMonth = 0;
+          calYear++;
+        }
+        updateCalendar(calcStats());
+      }
 
-  var start = new Date(latest.start); start.setHours(0,0,0,0);
-  date = new Date(date); date.setHours(0,0,0,0);
-  var diff = Math.round((date - start) / 86400000);
-  if (diff < 0) {
-    // Could be in a previous cycle
-    var cyclesBack = Math.ceil(Math.abs(diff) / stats.avgCycle);
-    start = new Date(start);
-    start.setDate(start.getDate() - cyclesBack * stats.avgCycle);
-    diff = Math.round((date - start) / 86400000);
-  }
-  var dayOfCycle = (diff % stats.avgCycle) + 1;
-  if (dayOfCycle <= 0) dayOfCycle += stats.avgCycle;
+      // ── KW Helpers ────────────────────────────────────────────────
+      function getKW(ds) {
+        var d = new Date(ds);
+        d.setHours(0, 0, 0, 0);
+        d.setDate(d.getDate() + 3 - ((d.getDay() + 6) % 7));
+        var w1 = new Date(d.getFullYear(), 0, 4);
+        return (
+          1 +
+          Math.round(((d - w1) / 86400000 - 3 + ((w1.getDay() + 6) % 7)) / 7)
+        );
+      }
+      function getMon(ds) {
+        var d = new Date(ds);
+        var day = d.getDay();
+        if (day === 0) day = 7;
+        d.setDate(d.getDate() - (day - 1));
+        return d;
+      }
+      function fmtDate(d) {
+        return d.toLocaleDateString("de-DE", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+        });
+      }
+      function fmtShort(d) {
+        return d.toLocaleDateString("de-DE", {
+          day: "2-digit",
+          month: "2-digit",
+        });
+      }
 
-  var ovDay    = stats.avgCycle - 14;
-  var fertFrom = ovDay - FERTILE_DAYS;
-  var pmsFrom  = stats.avgCycle - PMS_DAYS;
+      // ── Entries ───────────────────────────────────────────────────
+      function renderEntries() {
+        var q = (document.getElementById("kw-inp").value || "")
+          .toLowerCase()
+          .trim();
+        var list = document.getElementById("entries-list");
+        if (!cycles.length) {
+          list.innerHTML =
+            '<div class="empty-hint"><span class="big">📋</span>Noch keine Einträge.</div>';
+          return;
+        }
+        var filtered = cycles.filter(function (c) {
+          if (!q) return true;
+          return (
+            ("kw " + getKW(c.start)).includes(q) ||
+            (c.start && c.start.includes(q)) ||
+            (c.end && c.end.includes(q)) ||
+            (c.notes && c.notes.toLowerCase().includes(q))
+          );
+        });
+        if (!filtered.length) {
+          list.innerHTML =
+            '<div class="empty-hint">Keine Einträge gefunden.</div>';
+          return;
+        }
+        list.innerHTML = filtered
+          .map(function (c) {
+            var kw = getKW(c.start);
+            var mon = getMon(c.start);
+            var sun = new Date(mon);
+            sun.setDate(sun.getDate() + 6);
+            var hasEnd = !!c.end;
+            var dur = hasEnd
+              ? Math.round((new Date(c.end) - new Date(c.start)) / 86400000) +
+                " Tage"
+              : "";
+            return (
+              '<div class="cycle-entry ' +
+              (hasEnd ? "has-end" : "no-end") +
+              '" onclick="openModal(\'' +
+              c.id +
+              "')\">" +
+              '<div class="entry-kw">KW ' +
+              kw +
+              " · " +
+              new Date(c.start).getFullYear() +
+              "</div>" +
+              '<div class="entry-week">Mo ' +
+              fmtShort(mon) +
+              " – " +
+              fmtDate(sun) +
+              "</div>" +
+              '<div class="entry-dates">' +
+              '<div><div class="entry-date-label">Start</div><div class="entry-date-val">' +
+              fmtDate(new Date(c.start)) +
+              "</div></div>" +
+              (hasEnd
+                ? '<div><div class="entry-date-label">Ende</div><div class="entry-date-val">' +
+                  fmtDate(new Date(c.end)) +
+                  "</div></div>"
+                : "") +
+              "</div>" +
+              (hasEnd
+                ? '<div class="entry-duration">Dauer: ' + dur + "</div>"
+                : '<div class="no-end-badge">Ende fehlt noch</div>') +
+              (c.notes
+                ? '<div class="entry-notes">' + c.notes + "</div>"
+                : "") +
+              (c.updatedBy
+                ? '<div class="entry-updated">' +
+                  c.updatedBy +
+                  (c.updatedAt ? " · " + c.updatedAt : "") +
+                  "</div>"
+                : "") +
+              "</div>"
+            );
+          })
+          .join("");
+      }
 
-  if (dayOfCycle <= stats.avgDuration) return 'period';
-  if (dayOfCycle >= pmsFrom)          return 'pms';
-  if (dayOfCycle === ovDay)           return 'ovulation';
-  if (dayOfCycle >= fertFrom)         return 'fertile';
-  return 'luteal';
-}
+      // ── Modal ─────────────────────────────────────────────────────
+      function openModal(id) {
+        var del = document.getElementById("modal-delete-btn");
+        document.getElementById("edit-id").value = id || "";
+        if (id) {
+          var e = cycles.find(function (c) {
+            return c.id === id;
+          });
+          document.getElementById("modal-title").textContent =
+            "Eintrag bearbeiten";
+          document.getElementById("inp-start").value = e ? e.start : "";
+          document.getElementById("inp-end").value = e ? e.end || "" : "";
+          document.getElementById("inp-notes").value = e ? e.notes || "" : "";
+          del.style.display = "block";
+        } else {
+          document.getElementById("modal-title").textContent = "Neuer Zyklus";
+          document.getElementById("inp-start").value = "";
+          document.getElementById("inp-end").value = "";
+          document.getElementById("inp-notes").value = "";
+          del.style.display = "none";
+        }
+        document.getElementById("modal-overlay").classList.add("open");
+      }
+      function closeModal() {
+        document.getElementById("modal-overlay").classList.remove("open");
+      }
+      function closeModalOnBg(e) {
+        if (e.target === document.getElementById("modal-overlay")) closeModal();
+      }
 
-// ── updateAll ────────────────────────────────────────────────
-function updateAll() {
-  var stats = calcStats();
-  updateStatus(stats);
-  updateCalendar(stats);
-  renderEntries();
-  if (stats) {
-    document.getElementById('stats-row').style.display = 'grid';
-    document.getElementById('stat-avg').textContent = stats.avgCycle + 'd';
-    document.getElementById('stat-dur').textContent = stats.avgDuration + 'd';
-    document.getElementById('stat-cnt').textContent = stats.count;
-  }
-}
+      function saveCycle() {
+        var id = document.getElementById("edit-id").value;
+        var start = document.getElementById("inp-start").value;
+        var end = document.getElementById("inp-end").value;
+        var notes = document.getElementById("inp-notes").value;
+        if (!start) {
+          showToast("Bitte Startdatum eingeben");
+          return;
+        }
+        if (end && end < start) {
+          showToast("Ende muss nach Start liegen");
+          return;
+        }
+        var btn = document.getElementById("modal-save-btn");
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span>Speichern…';
+        var params = id
+          ? {
+              action: "updateCycle",
+              id: id,
+              start: start,
+              end: end,
+              notes: notes,
+              updatedBy: selectedWho,
+            }
+          : {
+              action: "addCycle",
+              start: start,
+              end: end,
+              notes: notes,
+              updatedBy: selectedWho,
+            };
+        apiCall(params)
+          .then(function (res) {
+            btn.disabled = false;
+            btn.textContent = "Speichern";
+            if (res.success) {
+              closeModal();
+              showToast("Gespeichert ✓");
+              loadData();
+            } else showToast("Fehler: " + (res.error || "Unbekannt"));
+          })
+          .catch(function () {
+            btn.disabled = false;
+            btn.textContent = "Speichern";
+          });
+      }
 
-// ── Status ───────────────────────────────────────────────────
-var phaseLabels = {
-  period: 'Periode', pms: 'PMS', fertile: 'Fruchtbare Phase',
-  ovulation: 'Eisprung', luteal: 'Lutealphase'
-};
+      function deleteCycleEntry() {
+        var id = document.getElementById("edit-id").value;
+        if (!id || !confirm("Eintrag wirklich löschen?")) return;
+        apiCall({ action: "deleteCycle", id: id }).then(function () {
+          closeModal();
+          showToast("Gelöscht");
+          loadData();
+        });
+      }
 
-function updateStatus(stats) {
-  var card = document.getElementById('hero-card');
-  if (!stats || !stats.latest || !stats.latest.start) {
-    card.innerHTML = '<div class="empty-hint"><span class="big">🌸</span>Noch keine Einträge.<br>Tippe auf + um zu starten.</div>';
-    document.getElementById('forecast-card').style.display = 'none';
-    return;
-  }
+      function showSection(name, btn) {
+        document.querySelectorAll(".section").forEach(function (s) {
+          s.classList.remove("visible");
+        });
+        document.querySelectorAll(".nav-btn").forEach(function (b) {
+          b.classList.remove("active");
+        });
+        document.getElementById("sec-" + name).classList.add("visible");
+        if (btn) btn.classList.add("active");
+        document.getElementById("scroll-area").scrollTop = 0;
+      }
+      function selWho(btn, who) {
+        selectedWho = who;
+        document.querySelectorAll(".who-btn").forEach(function (b) {
+          b.classList.remove("sel");
+        });
+        btn.classList.add("sel");
+      }
+      function showToast(msg) {
+        var t = document.getElementById("toast");
+        t.textContent = msg;
+        t.classList.add("show");
+        setTimeout(function () {
+          t.classList.remove("show");
+        }, 2500);
+      }
 
-  var today = new Date(); today.setHours(0,0,0,0);
-  var start = new Date(stats.latest.start); start.setHours(0,0,0,0);
-  var diff  = Math.round((today - start) / 86400000);
-  var dayOfCycle = (diff % stats.avgCycle) + 1;
-  var phase = getPhaseForDate(today, stats);
+      var now = new Date();
+      calYear = now.getFullYear();
+      calMonth = now.getMonth();
 
-  card.innerHTML =
-    '<div class="status-hero">' +
-    '<div class="hero-day">' + dayOfCycle + '</div>' +
-    '<div class="hero-sub">Tag ' + dayOfCycle + ' von ' + stats.avgCycle + '</div>' +
-    '<div class="phase-pill pill-' + phase + '">' + phaseLabels[phase] + '</div>' +
-    '</div>';
-
-  // Forecast
-  var fc = document.getElementById('forecast-card');
-  fc.style.display = 'block';
-  var ovDay    = stats.avgCycle - 14;
-  var fertFrom = ovDay - FERTILE_DAYS;
-  var pmsFrom  = stats.avgCycle - PMS_DAYS;
-
-  function daysUntil(targetCycleDay) {
-    var d = targetCycleDay - dayOfCycle;
-    if (d <= 0) d += stats.avgCycle;
-    return d;
-  }
-
-  var items = [
-    { label: 'PMS beginnt',      days: daysUntil(pmsFrom),  cls: 'd-pms',       phase: 'pms' },
-    { label: 'Fruchtbare Phase', days: daysUntil(fertFrom), cls: 'd-fertile',   phase: 'fertile' },
-    { label: 'Eisprung',         days: daysUntil(ovDay),    cls: 'd-ovulation', phase: 'ovulation' },
-    { label: 'Nächste Periode',  days: daysUntil(stats.avgCycle), cls: 'd-period', phase: 'period' }
-  ];
-  items.sort(function(a,b){ return a.days - b.days; });
-
-  document.getElementById('forecast-list').innerHTML = items.map(function(i) {
-    var d = new Date(today); d.setDate(d.getDate() + i.days);
-    var when = i.days === 0 ? 'heute' : i.days === 1 ? 'morgen' : 'in ' + i.days + ' Tagen';
-    return '<div class="forecast-row">' +
-      '<div><div class="forecast-name">' + i.label + '</div><div class="forecast-date">' + fmtDate(d) + '</div></div>' +
-      '<div class="f-right"><div class="dot ' + i.cls + '"></div><span class="days-away">' + when + '</span></div>' +
-      '</div>';
-  }).join('');
-}
-
-// ── Calendar ─────────────────────────────────────────────────
-function updateCalendar(stats) {
-  var months = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
-  document.getElementById('cal-label').textContent = months[calMonth] + ' ' + calYear;
-
-  var grid = document.getElementById('cal-grid');
-  var html = ['Mo','Di','Mi','Do','Fr','Sa','So'].map(function(d){ return '<div class="cal-hdr">'+d+'</div>'; }).join('');
-
-  var first = new Date(calYear, calMonth, 1);
-  var dow   = first.getDay(); if (dow === 0) dow = 7;
-  for (var i = 1; i < dow; i++) html += '<div></div>';
-
-  var today = new Date(); today.setHours(0,0,0,0);
-  var daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
-
-  for (var d = 1; d <= daysInMonth; d++) {
-    var date = new Date(calYear, calMonth, d);
-    var cls  = 'cal-cell';
-    if (date.getTime() === today.getTime()) cls += ' today';
-    if (stats) {
-      var phase = getPhaseForDate(date, stats);
-      if (phase === 'period')    cls += ' c-period';
-      else if (phase === 'pms')       cls += ' c-pms';
-      else if (phase === 'fertile')   cls += ' c-fertile';
-      else if (phase === 'ovulation') cls += ' c-ovulation';
-    }
-    html += '<div class="' + cls + '">' + d + '</div>';
-  }
-  grid.innerHTML = html;
-}
-
-function prevMonth() { calMonth--; if (calMonth < 0) { calMonth = 11; calYear--; } updateCalendar(calcStats()); }
-function nextMonth() { calMonth++; if (calMonth > 11) { calMonth = 0; calYear++; } updateCalendar(calcStats()); }
-
-// ── KW Helpers ───────────────────────────────────────────────
-function getKW(dateStr) {
-  var d = new Date(dateStr);
-  d.setHours(0,0,0,0);
-  d.setDate(d.getDate() + 3 - ((d.getDay() + 6) % 7));
-  var week1 = new Date(d.getFullYear(), 0, 4);
-  return 1 + Math.round(((d - week1) / 86400000 - 3 + ((week1.getDay() + 6) % 7)) / 7);
-}
-
-function getMondayOfDate(dateStr) {
-  var d = new Date(dateStr);
-  var day = d.getDay(); if (day === 0) day = 7;
-  d.setDate(d.getDate() - (day - 1));
-  return d;
-}
-
-function fmtDate(d) {
-  return d.toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric' });
-}
-
-function fmtShort(dateStr) {
-  var d = new Date(dateStr);
-  return d.toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit' });
-}
-
-// ── Entries list ─────────────────────────────────────────────
-function renderEntries() {
-  var query  = (document.getElementById('kw-search-inp').value || '').toLowerCase().trim();
-  var list   = document.getElementById('entries-list');
-
-  if (!cycles.length) {
-    list.innerHTML = '<div class="empty-hint"><span class="big">📋</span>Noch keine Einträge vorhanden.</div>';
-    return;
-  }
-
-  var filtered = cycles.filter(function(c) {
-    if (!query) return true;
-    var kw = 'kw ' + getKW(c.start);
-    return kw.includes(query) ||
-      (c.start && c.start.includes(query)) ||
-      (c.end && c.end.includes(query)) ||
-      (c.notes && c.notes.toLowerCase().includes(query));
-  });
-
-  if (!filtered.length) {
-    list.innerHTML = '<div class="empty-hint">Keine Einträge gefunden.</div>';
-    return;
-  }
-
-  list.innerHTML = filtered.map(function(c) {
-    var kw      = getKW(c.start);
-    var monday  = getMondayOfDate(c.start);
-    var sunday  = new Date(monday); sunday.setDate(sunday.getDate() + 6);
-    var weekStr = fmtShort(monday) + ' – ' + fmtDate(sunday);
-    var hasEnd  = !!c.end;
-    var duration = '';
-    if (hasEnd) {
-      var dur = Math.round((new Date(c.end) - new Date(c.start)) / 86400000);
-      duration = dur + ' Tag' + (dur !== 1 ? 'e' : '');
-    }
-    return '<div class="cycle-entry ' + (hasEnd ? 'has-end' : 'no-end') + '" onclick="openModal(\'' + c.id + '\')">' +
-      '<div class="entry-kw">KW ' + kw + ' · ' + new Date(c.start).getFullYear() + '</div>' +
-      '<div class="entry-week">Mo ' + weekStr + '</div>' +
-      '<div class="entry-dates">' +
-        '<div class="entry-date-block"><div class="entry-date-label">Start</div><div class="entry-date-val">' + fmtDate(new Date(c.start)) + '</div></div>' +
-        (hasEnd
-          ? '<div class="entry-date-block"><div class="entry-date-label">Ende</div><div class="entry-date-val">' + fmtDate(new Date(c.end)) + '</div></div>'
-          : '') +
-      '</div>' +
-      (hasEnd ? '<div class="entry-duration">Dauer: ' + duration + '</div>' : '<div class="no-end-badge">Ende fehlt noch</div>') +
-      (c.notes ? '<div class="entry-notes">' + c.notes + '</div>' : '') +
-      (c.updatedBy ? '<div class="entry-updated">Geändert von ' + c.updatedBy + (c.updatedAt ? ' · ' + c.updatedAt : '') + '</div>' : '') +
-      '</div>';
-  }).join('');
-}
-
-// ── Modal ────────────────────────────────────────────────────
-function openModal(id) {
-  var overlay = document.getElementById('modal-overlay');
-  var deleteBtn = document.getElementById('modal-delete-btn');
-  document.getElementById('edit-id').value = id || '';
-
-  if (id) {
-    var entry = cycles.find(function(c){ return c.id === id; });
-    document.getElementById('modal-title').textContent = 'Eintrag bearbeiten';
-    document.getElementById('inp-start').value = entry ? entry.start : '';
-    document.getElementById('inp-end').value   = entry ? (entry.end || '') : '';
-    document.getElementById('inp-notes').value = entry ? (entry.notes || '') : '';
-    deleteBtn.style.display = 'block';
-  } else {
-    document.getElementById('modal-title').textContent = 'Neuer Zyklus';
-    document.getElementById('inp-start').value = '';
-    document.getElementById('inp-end').value   = '';
-    document.getElementById('inp-notes').value = '';
-    deleteBtn.style.display = 'none';
-  }
-  overlay.classList.add('open');
-}
-
-function closeModal() {
-  document.getElementById('modal-overlay').classList.remove('open');
-}
-
-function closeModalOnBg(e) {
-  if (e.target === document.getElementById('modal-overlay')) closeModal();
-}
-
-// ── Save ─────────────────────────────────────────────────────
-function saveCycle() {
-  var id    = document.getElementById('edit-id').value;
-  var start = document.getElementById('inp-start').value;
-  var end   = document.getElementById('inp-end').value;
-  var notes = document.getElementById('inp-notes').value;
-
-  if (!start) { showToast('Bitte Startdatum eingeben'); return; }
-  if (end && end < start) { showToast('Ende muss nach Start liegen'); return; }
-
-  var btn = document.getElementById('modal-save-btn');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span>Speichern…';
-
-  var onSuccess = function(result) {
-    btn.disabled = false;
-    btn.textContent = 'Speichern';
-    if (!result.success && result.error) { showToast('Fehler: ' + result.error); return; }
-    closeModal();
-    showToast('Gespeichert ✓');
-    loadData();
-  };
-  var onFail = function(e) {
-    btn.disabled = false;
-    btn.textContent = 'Speichern';
-    showToast('Fehler beim Speichern');
-  };
-
-  if (id) {
-    google.script.run.withSuccessHandler(onSuccess).withFailureHandler(onFail)
-      .updateCycle(id, start, end, notes, selectedWho);
-  } else {
-    google.script.run.withSuccessHandler(onSuccess).withFailureHandler(onFail)
-      .addCycle(start, end, notes, selectedWho);
-  }
-}
-
-// ── Delete ───────────────────────────────────────────────────
-function deleteCycleEntry() {
-  var id = document.getElementById('edit-id').value;
-  if (!id) return;
-  if (!confirm('Eintrag wirklich löschen?')) return;
-  google.script.run
-    .withSuccessHandler(function() { closeModal(); showToast('Gelöscht'); loadData(); })
-    .withFailureHandler(function() { showToast('Fehler beim Löschen'); })
-    .deleteCycle(id);
-}
-
-// ── Navigation ───────────────────────────────────────────────
-function showSection(name, btn) {
-  document.querySelectorAll('.section').forEach(function(s){ s.classList.remove('visible'); });
-  document.querySelectorAll('.nav-btn').forEach(function(b){ b.classList.remove('active'); });
-  document.getElementById('sec-' + name).classList.add('visible');
-  if (btn) btn.classList.add('active');
-  document.getElementById('scroll-area').scrollTop = 0;
-}
-
-function selWho(btn, who) {
-  selectedWho = who;
-  document.querySelectorAll('.who-btn').forEach(function(b){ b.classList.remove('sel'); });
-  btn.classList.add('sel');
-}
-
-// ── Toast ────────────────────────────────────────────────────
-function showToast(msg) {
-  var t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(function(){ t.classList.remove('show'); }, 2500);
-}
-</script>
-</body>
+      // Check if API URL is configured
+      if (!API_URL || API_URL.indexOf("PASTE") !== -1) {
+        document.getElementById("sync-badge").textContent =
+          "Nicht konfiguriert";
+        document.getElementById("hero-card").innerHTML =
+          '<div class="setup-warning">⚠️ Bitte die <strong>API_URL</strong> in der index.html mit deiner Apps Script URL ersetzen, dann erneut auf GitHub hochladen.</div>';
+      } else {
+        loadData();
+      }
+    </script>
+  </body>
 </html>
